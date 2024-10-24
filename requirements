@@ -1,0 +1,4 @@
+pytorch
+python==3.8
+matplotlib
+scipy
