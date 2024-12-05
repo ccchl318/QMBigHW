@@ -12,24 +12,8 @@ dtype = torch.float
 import torch.nn as nn
 import math
 
-# 检查MPS是否可用
-if torch.backends.mps.is_available():
-    print("MPS is available")
 
-    # 设置设备为MPS
-    device = torch.device("mps")
-
-    # 输出当前设备（MPS设备）
-    print("Current device:", device)
-
-    # 因为MPS是单一设备，因此无法像CUDA那样获取多个设备的信息
-    print("Device count: 1")
-
-    # 获取设备的名称（通常是Apple设备的GPU）
-    print("Device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "Apple MPS")
-else:
-    print("MPS is not available, using CPU")
-    device = torch.device("cpu")
+device = torch.device("cpu")
 
 # Define the sin() activation function
 class mySin(torch.nn.Module):
@@ -46,6 +30,7 @@ def dfx(x, f):
     return grad([f], [x], grad_outputs=gopts, create_graph=True)[0]
 
 # 神经网络的结构定义
+# 有限深势阱
 class qNN1(torch.nn.Module):
     def __init__(self, D_hid=10):
         super(qNN1, self).__init__()
@@ -94,6 +79,42 @@ class qNN1(torch.nn.Module):
         return out, In1
 
 
+
+# 氢原子
+class qNN2(torch.nn.Module):
+    def __init__(self, D_hid=10):
+        super(qNN2, self).__init__()
+
+        # Define the Activation
+        self.actF = mySin()
+
+        # define layers
+        self.Ein = torch.nn.Linear(1, 1)
+        self.Lin_1 = torch.nn.Linear(2, D_hid)
+        self.Lin_2 = torch.nn.Linear(D_hid, D_hid)  # torch.nn.Linear(D_hid+1, D_hid)
+        self.out = torch.nn.Linear(D_hid, 1)  # torch.nn.Linear(D_hid+1, 1)
+
+    def forward(self, t):
+        In1 = self.Ein(torch.ones_like(t))  # torch.ones_like(t)/-18#
+
+        L1 = self.Lin_1(torch.cat((t, In1), 1))
+        # L1p = self.Lin_1(torch.cat((-1*t,In1),1))
+
+        h1 = self.actF(L1)
+        # h1p = self.actF(L1p)
+
+        L2 = self.Lin_2(h1)  # self.Lin_2(torch.cat((h1,In1),1))
+        # L2p = self.Lin_2(torch.cat((h1p,In1),1))
+
+        h2 = self.actF(L2)
+        # h2p = self.actF(L2p)
+
+        out = self.out(h2)  # self.out(torch.cat((h2, In1),1))#self.out(torch.cat((h2+h2p,In1),1))#
+        return out, -torch.abs(In1)
+
+
+
+
 class PotentialBase():
     # x in [t0,tf]，neurons为隐藏层的神经元的数量，epochs为学习次数，n_train为在采样区间内采样的数量，lr为学习率
     def __init__(self, t0, tf, x1, neurons, epochs, n_train, lr, minibatch_number=1):
@@ -107,6 +128,7 @@ class PotentialBase():
         self._minibatch_number = minibatch_number
         # 用来记录所有的loss
         self._loss_history = ()
+
 
     def _potential(self, Xs):
         raise NotImplementedError
@@ -122,11 +144,8 @@ class PotentialBase():
 
     # visualization the wavefunction represented by nn, t is the x-parameters, x1 is f_b in the paper
     def parametricSolutions(self, t, nn):
-        N1, N2 = nn(t)
-        dt = t - self._t0
-        f = (1 - torch.exp(-dt)) * (1 - torch.exp(dt - 12))
-        psi_hat = self._x1 + f * N1
-        return psi_hat
+        raise NotImplementedError
+
 
     def _perturbPoints(self, grid, sig):
         # stochastic perturbation of the evaluation points
@@ -145,12 +164,8 @@ class PotentialBase():
 
     # t is the set of sample points, f is the residual of the Eigen equation, L is the L_DE, H_psi is the Hamiltonian
     def _hamEqs_Loss(self, t, psi, E, V):
-        psi_dx = dfx(t, psi)
-        psi_ddx = dfx(t, psi_dx)
-        f = psi_ddx / 2 + (E - V) * psi
-        L = (f.pow(2)).mean();
-        H_psi = -1 * psi_ddx / 2 + (V) * psi
-        return L, f, H_psi
+        raise NotImplementedError
+
 
 
 

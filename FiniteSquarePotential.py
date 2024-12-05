@@ -28,6 +28,21 @@ class FiniteSquarePotential(PotentialBase):
         Vtorch = torch.from_numpy(Vnp)
         return Vtorch
 
+    def parametricSolutions(self, t, nn):
+        N1, N2 = nn(t)
+        dt = t - self._t0
+        f = (1 - torch.exp(-dt)) * (1 - torch.exp(dt - 12))
+        psi_hat = self._x1 + f * N1
+        return psi_hat
+
+    def _hamEqs_Loss(self, t, psi, E, V):
+        psi_dx = dfx(t, psi)
+        psi_ddx = dfx(t, psi_dx)
+        f = psi_ddx / 2 + (E - V) * psi
+        L = (f.pow(2)).mean();
+        H_psi = -1 * psi_ddx / 2 + (V) * psi
+        return L, f, H_psi
+
     def train(self):
         # 第一个波函数的N(x,lambda)
         N0 = qNN1(self._neurons)
