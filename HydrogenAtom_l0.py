@@ -26,6 +26,13 @@ class HydrogenAtom_l0(PotentialBase):
         Vtorch = torch.from_numpy(Vnp)
         return Vtorch
 
+    def print_potential(self):
+        xs = np.linspace(0.1, 15, 1000)
+        plotys = self._potential(torch.tensor(xs))
+        plt.plot(xs, plotys)
+        plt.xlabel('x')
+        plt.ylabel('V')
+
     def parametricSolutions(self, t, nn):
         N1, N2 = nn(t)
         f = (1 - torch.exp(t - 15))
@@ -194,44 +201,45 @@ class HydrogenAtom_l0(PotentialBase):
 if __name__ == "__main__":
     a = HydrogenAtom_l0(0.1, 15, 0, 100, int(6e4), 3000, 8e-3, 1)
     N1, dic, loss_history, _, _ = a.train()
+    a.print_potential()
 
-# loss_tot随训练次数的变化
-import matplotlib.pyplot as plt
+    # loss_tot随训练次数的变化
+    import matplotlib.pyplot as plt
 
-plt.figure(figsize=(8, 6))
-SH_Loss = [i.detach().numpy() for i in loss_history[0]]
-plt.semilogy(SH_Loss, '-b', alpha=0.975)
-plt.tight_layout()
-# x_ticks = [10**i for i in range(0, 5)]  # x 轴刻度从 10^0 到 10^4
-# y_ticks = [10**i for i in range(-1, 4)]  # y 轴刻度从 10^-1 到 10^3
-plt.ylabel(r'$Loss_{tot}$');
-plt.xlabel('n')
-plt.show()
+    plt.figure(figsize=(8, 6))
+    SH_Loss = [i.detach().numpy() for i in loss_history[0]]
+    plt.semilogy(SH_Loss, '-b', alpha=0.975)
+    plt.tight_layout()
+    # x_ticks = [10**i for i in range(0, 5)]  # x 轴刻度从 10^0 到 10^4
+    # y_ticks = [10**i for i in range(-1, 4)]  # y 轴刻度从 10^-1 到 10^3
+    plt.ylabel(r'$Loss_{tot}$');
+    plt.xlabel('n')
+    plt.show()
 
-plt.figure(figsize=(8, 6))
-# En_history = [i.detach().numpy() for i in loss_history[1]]
-En_history = loss_history[1]
-plt.plot(En_history, '-b', alpha=0.975)
-plt.tight_layout()
-# x_ticks = [10**i for i in range(0, 5)]  # x 轴刻度从 10^0 到 10^4
-# y_ticks = [10**i for i in range(-1, 4)]  # y 轴刻度从 10^-1 到 10^3
-plt.ylabel(r'$Energy$');
-plt.xlabel('n')
-plt.show()
+    plt.figure(figsize=(8, 6))
+    # En_history = [i.detach().numpy() for i in loss_history[1]]
+    En_history = loss_history[1]
+    plt.plot(En_history, '-b', alpha=0.975)
+    plt.tight_layout()
+    # x_ticks = [10**i for i in range(0, 5)]  # x 轴刻度从 10^0 到 10^4
+    # y_ticks = [10**i for i in range(-1, 4)]  # y 轴刻度从 10^-1 到 10^3
+    plt.ylabel(r'$Energy$');
+    plt.xlabel('n')
+    plt.show()
 
 
-# 绘制psi_0，对psi的幅值进行了缩放
-plt.figure(figsize=(8, 6))
-x = torch.linspace(0.1, 6, 100).reshape(-1, 1)
-psy = a.parametricSolutions(x, dic[1][0])
-psy = [i.detach().numpy() for i in psy]
+    # 绘制psi_0，对psi的幅值进行了缩放
+    plt.figure(figsize=(8, 6))
+    x = torch.linspace(0.1, 6, 100).reshape(-1, 1)
+    psy = a.parametricSolutions(x, dic[1][0])
+    psy = [i.detach().numpy() for i in psy]
 
-x1 = torch.linspace(0.1, 6, 100).reshape(-1, 1)
-R_10 = 2 * np.exp(-x1)
-R_20 = 1 / np.sqrt(2) * (1 - x1 / 2) * np.exp(-x1 / 2)
-R_30 = 2 / 27 * (1 - 2 * x1 / 3 + 2 / 27) * x1 * x1 * np.exp(-x1 / 3)
-R_40 = 0.25 * (1 - 3 / 4 * x1 + x1 * x1 / 8 - 1 / 192 * x1 * x1 * x1) * np.exp(-x1 / 4)
-plt.plot(x, psy, 'r')
-plt.plot(x1,R_10, 'b')
+    x1 = torch.linspace(0.1, 6, 100).reshape(-1, 1)
+    R_10 = 2 * np.exp(-x1)
+    R_20 = 1 / np.sqrt(2) * (1 - x1 / 2) * np.exp(-x1 / 2)
+    R_30 = 2 / 27 * (1 - 2 * x1 / 3 + 2 / 27) * x1 * x1 * np.exp(-x1 / 3)
+    R_40 = 0.25 * (1 - 3 / 4 * x1 + x1 * x1 / 8 - 1 / 192 * x1 * x1 * x1) * np.exp(-x1 / 4)
+    plt.plot(x, psy, 'r')
+    plt.plot(x1,R_10, 'b')
 
-plt.show()
+    plt.show()

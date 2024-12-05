@@ -28,6 +28,13 @@ class FiniteSquarePotential(PotentialBase):
         Vtorch = torch.from_numpy(Vnp)
         return Vtorch
 
+    def print_potential(self):
+        xs = np.linspace(0,15,1000)
+        plotys = potential(torch.tensor(xs))
+        plt.plot(plotxs, plotys)
+        plt.xlabel('x')
+        plt.ylabel('V')
+
     def parametricSolutions(self, t, nn):
         N1, N2 = nn(t)
         dt = t - self._t0
